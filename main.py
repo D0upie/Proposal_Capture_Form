@@ -30,7 +30,7 @@ def main():
         # Store the selected solution in session state
         st.session_state.selected_solution = selected_solution
 
-    page = st.sidebar.selectbox("Go to", ["Key Challenges", "Solutions Aspect", "Summary"])
+    page = st.sidebar.selectbox("Go to", ["Key Challenges", "Solutions Aspect", "Additional Info", "Summary"])
 
     if page == "Main Menu":
         render_page_1()
@@ -38,8 +38,10 @@ def main():
         render_page_2()
     elif page == "Solutions Aspect":
         render_page_3()
-    elif page == "Summary":
+    elif page == "Additional Info":
         render_page_4()
+    elif page == "Summary":
+        render_page_5()
 
 # Define functions to render each page
 def render_page_1():
@@ -115,6 +117,48 @@ def render_page_3():
         st.write(capture_solution_aspects)
 
 def render_page_4():
+    # Retrieve solution option from session state
+    selected_solution = st.session_state.selected_solution
+
+    if 'selected_options' not in st.session_state:
+        st.session_state.selected_options = {}
+
+    # Retrieve client's name from session state
+    client_name = st.session_state.client_name
+
+    # Initialize DataFrame to store user inputs
+    if 'user_inputs' not in st.session_state:
+        st.session_state.user_inputs = pd.DataFrame(columns=['Solution','Category', 'Sub-Category', 'Importance', 'User Input'])
+
+    st.title(f"Additional Info for *{client_name}*")
+    
+    additional_info = st.session_state.selected_options.get("additional_info_input", "")
+
+    additional_info = st.text_area("Please add any additional information that may be relevant to the proposal",
+                                   value=additional_info, 
+                                   key="additional_info_input",
+                                   placeholder="Enter additional info here")
+
+    # Always remove existing entries for 'Additional Info' category first
+    st.session_state.user_inputs = st.session_state.user_inputs[st.session_state.user_inputs['Category'] != 'Additional Info']
+
+    # Only add new entry if additional_info is not empty
+    if additional_info.strip():  # .strip() to check if input is not just whitespace
+        new_entry_df = pd.DataFrame({
+            'Solution': [selected_solution],
+            'Category': ['Additional Info'],
+            'Sub-Category': [''],  # Adjust if necessary
+            'Importance': [''],  # Adjust if necessary
+            'User Input': [additional_info]
+        })
+        # Concatenate the existing DataFrame with the new DataFrame
+        st.session_state.user_inputs = pd.concat([st.session_state.user_inputs, new_entry_df], ignore_index=True)
+
+    # Store the additional info in session state regardless of its content
+    st.session_state.selected_options["additional_info_input"] = additional_info
+
+
+def render_page_5():
     # Retrieve solution option from session state
     selected_solution = st.session_state.selected_solution
 

@@ -62,32 +62,36 @@ def text_input(selected_solution, solutions_aspect):
     for category, sub_categories in solutions_aspect.items():
         user_input = st.session_state.selected_options.get(f"{category}_input", "")
 
-        #st.write(category)
+        # Display text area for user to input details
         user_input = st.text_area(f"{category}:", value=user_input, key=f"{category}_input", placeholder="Enter details here")
 
-        # Check if the user input is not empty
-        if user_input.strip():
-            # Check if entry already exists in DataFrame
-            existing_index = st.session_state.user_inputs[st.session_state.user_inputs['Sub-Category'] == category].index
+        # Determine the index for any existing entries for this category
+        existing_index = st.session_state.user_inputs[st.session_state.user_inputs['Sub-Category'] == category].index
 
-            # If entry exists, update it with the most recent input
+        # If user input is not empty, update or add new entry
+        if user_input.strip():  # Check if input is not just whitespace
             if not existing_index.empty:
+                # If entry exists, update it
                 st.session_state.user_inputs.loc[existing_index, 'User Input'] = user_input
             else:
-                # Create a DataFrame with the most recent input
+                # If no entry exists, create a new one
                 new_entry_df = pd.DataFrame({
                     'Solution': selected_solution,
                     'Category': ['Solutions Aspect'],
                     'Sub-Category': [category],
-                    'Importance': [''],
+                    'Importance': [''],  # Adjust if necessary
                     'User Input': [user_input]
                 })
-
                 # Concatenate the existing DataFrame with the new DataFrame
                 st.session_state.user_inputs = pd.concat([st.session_state.user_inputs, new_entry_df], ignore_index=True)
+        else:
+            # If user input is empty and an entry exists, remove it
+            if not existing_index.empty:
+                st.session_state.user_inputs = st.session_state.user_inputs.drop(existing_index)
 
-        # Store the user input in session state
+        # Store the user input in session state, regardless of its content
         st.session_state.selected_options[f"{category}_input"] = user_input
+
 
 # Function to export DataFrame to CSV and return its content
 def generate_csv(data):
