@@ -2,15 +2,25 @@ import streamlit as st
 import pandas as pd
 import csv, pyodbc
 import snowflake.connector
+import uuid
 from datetime import datetime
 
 # Define radio options
 radio_options = ["None", "Low", "Moderate", "High"]
 
+
+def generate_session_id():
+    # Generate a UUID4 session ID
+    session_id = str(uuid.uuid4())
+    return session_id
+
+st.session_state.session_id = generate_session_id()
+
 # Function to iterate through the "Key Challenges" section of the proposal sections
 def radio_select(selected_solution, key_challenges, parent_list=""):
     # Retrieve client's name from session state
     client_name = st.session_state.client_name
+    session_id = st.session_state.session_id
 
     for challenge, challenge_value in key_challenges.items():
         if isinstance(challenge_value, dict):  # Check if the challenge is a nested dictionary
@@ -40,6 +50,7 @@ def radio_select(selected_solution, key_challenges, parent_list=""):
 
                     # Create a DataFrame with the most recent input
                     new_entry_df = pd.DataFrame({
+                        'Session ID': [session_id],
                         'Client'   : [client_name], 
                         'Solution': [selected_solution],
                         'Category': ['Key Challenges'],
@@ -68,6 +79,7 @@ def radio_select(selected_solution, key_challenges, parent_list=""):
 def text_input(selected_solution, solutions_aspect):
     # Retrieve client's name from session state
     client_name = st.session_state.client_name
+    session_id = st.session_state.session_id
     for category, sub_categories in solutions_aspect.items():
         user_input = st.session_state.selected_options.get(f"{category}_input", "")
 
@@ -85,6 +97,7 @@ def text_input(selected_solution, solutions_aspect):
             else:
                 # If no entry exists, create a new one
                 new_entry_df = pd.DataFrame({
+                    'Session ID': [session_id],
                     'Client'  : [client_name],
                     'Solution': [selected_solution],
                     'Category': ['Solutions Aspect'],
@@ -109,16 +122,6 @@ def generate_csv(data):
     csv = data.to_csv(index=False)
     return csv.encode()
 
-# Function to establish connection to sql server
-#def connect_to_db():
-#    server = st.secrets["db_credentials"]["server"]
-#    database = st.secrets["db_credentials"]["database"]
-#    username = st.secrets["db_credentials"]["username"]
-#    password = st.secrets["db_credentials"]["password"]
-#    cnxn = pyodbc.connect(f'DRIVER={{ODBC Driver 17 for SQL Server}};SERVER={server};DATABASE={database};UID={username};PWD={password}')
-#    cursor = cnxn.cursor()
-#    return cursor
-
 def connect_to_db():
 
     # Access secrets
@@ -141,13 +144,6 @@ def connect_to_db():
 
     return cnxn
 
-# Function to export DataFrame to sql
-#def export_to_sql(data, cursor):
-    #for index, row in data.iterrows():
-        #cursor.execute("INSERT INTO UserInputs (Solution, Category, SubCategory, Importance, UserInput) VALUES (?, ?, ?, ?, ?)", 
-                       #row['Solution'], row['Category'], row['Sub-Category'], row['Importance'], row['User Input'])
-    #cursor.commit()
-
 # Function to export DataFrame to snowflake
 def export_to_sql(data, cnxn):
     cursor = cnxn.cursor()
@@ -155,10 +151,11 @@ def export_to_sql(data, cnxn):
         for index, row in data.iterrows():
             query = """
             INSERT INTO Captured_Data
-            (Client, Solution, Category, Sub_Category, Importance, User_Input, Date_Loaded)
-            VALUES (%(client)s, %(solution)s, %(category)s, %(sub_category)s, %(importance)s, %(user_input)s, %(date_loaded)s)
+            (Session_id,Client, Solution, Category, Sub_Category, Importance, User_Input, Date_Loaded)
+            VALUES (%(session_id)s,%(client)s, %(solution)s, %(category)s, %(sub_category)s, %(importance)s, %(user_input)s, %(date_loaded)s)
             """
             row_data = {
+                'session_id': row['Session ID'],
                 'client'  : row['Client'],
                 'solution': row['Solution'],
                 'category': row['Category'],
