@@ -2,7 +2,8 @@ import streamlit as st
 import pandas as pd
 import json, datetime
 # Import necessary functions or modules
-from functions import radio_select, text_input, generate_csv
+from functions import radio_select, text_input, generate_csv, connect_to_db, export_to_sql
+from datetime import datetime
 
 st.set_page_config(layout="wide")
 
@@ -79,7 +80,7 @@ def render_page_2():
 
     # Initialize DataFrame to store user inputs
     if 'user_inputs' not in st.session_state:
-        st.session_state.user_inputs = pd.DataFrame(columns=['Solution','Category', 'Sub-Category', 'Importance', 'User Input'])
+        st.session_state.user_inputs = pd.DataFrame(columns=['Client','Solution','Category', 'Sub-Category', 'Importance', 'User Input','Date Loaded'])
 
     st.title(f"Key Challenges - *{st.session_state.selected_solution}* for *{st.session_state.client_name}*")
     radio_select(selected_solution, proposal_sections[st.session_state.selected_solution]["Key Challenges"])
@@ -105,7 +106,7 @@ def render_page_3():
 
     # Initialize DataFrame to store user inputs
     if 'user_inputs' not in st.session_state:
-        st.session_state.user_inputs = pd.DataFrame(columns=['Solution','Category', 'Sub-Category', 'Importance', 'User Input'])
+        st.session_state.user_inputs = pd.DataFrame(columns=['Client', 'Solution','Category', 'Sub-Category', 'Importance', 'User Input', 'Date Loaded'])
 
     st.title(f"Solutions Aspect - *{st.session_state.selected_solution}* for *{st.session_state.client_name}*")
     text_input(selected_solution, proposal_sections[st.session_state.selected_solution]["Solution Aspect"])
@@ -128,7 +129,7 @@ def render_page_4():
 
     # Initialize DataFrame to store user inputs
     if 'user_inputs' not in st.session_state:
-        st.session_state.user_inputs = pd.DataFrame(columns=['Solution','Category', 'Sub-Category', 'Importance', 'User Input'])
+        st.session_state.user_inputs = pd.DataFrame(columns=['Client', 'Solution','Category', 'Sub-Category', 'Importance', 'User Input', 'Date Loaded'])
 
     st.title(f"Additional Info for *{client_name}*")
     
@@ -145,11 +146,13 @@ def render_page_4():
     # Only add new entry if additional_info is not empty
     if additional_info.strip():  # .strip() to check if input is not just whitespace
         new_entry_df = pd.DataFrame({
+            'Client'  : [client_name],
             'Solution': [selected_solution],
             'Category': ['Additional Info'],
             'Sub-Category': [''],  # Adjust if necessary
             'Importance': [''],  # Adjust if necessary
-            'User Input': [additional_info]
+            'User Input': [additional_info],
+            'Date Loaded': [datetime.now().strftime('%Y-%m-%d %H:%M:%S')]
         })
         # Concatenate the existing DataFrame with the new DataFrame
         st.session_state.user_inputs = pd.concat([st.session_state.user_inputs, new_entry_df], ignore_index=True)
@@ -173,14 +176,23 @@ def render_page_5():
 
     # Define CSV file path
     client_name = st.session_state.client_name
-    Year = datetime.datetime.now().strftime("%Y")
-    Hour = datetime.datetime.now().strftime("%H")
-    Minutes = datetime.datetime.now().strftime("%M")
-    Seconds = datetime.datetime.now().strftime("%S")
+    Year = datetime.now().strftime("%Y")
+    Hour = datetime.now().strftime("%H")
+    Minutes = datetime.now().strftime("%M")
+    Seconds = datetime.now().strftime("%S")
     file_name = (f"Proposal_Form_{client_name}_{Year}{Hour}{Minutes}{Seconds}.csv")
     csv_data = generate_csv(user_inputs)
 
+
     st.download_button(label='Download CSV', data=csv_data, file_name=file_name, mime='text/csv')
+
+
+    if st.button('Export to Snowflake'):
+        cnxn = connect_to_db()  # Get the connection object
+        export_to_sql(user_inputs, cnxn)  # Pass the connection to the function
+        cnxn.close()  # Close the connection after operation
+        st.success('Data exported successfully to SQL database.')
+
 
 # Entry point of the application
 if __name__ == "__main__":

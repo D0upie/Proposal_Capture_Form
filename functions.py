@@ -1,12 +1,17 @@
 import streamlit as st
-import csv
 import pandas as pd
+import csv, pyodbc
+import snowflake.connector
+from datetime import datetime
 
 # Define radio options
 radio_options = ["None", "Low", "Moderate", "High"]
 
 # Function to iterate through the "Key Challenges" section of the proposal sections
 def radio_select(selected_solution, key_challenges, parent_list=""):
+    # Retrieve client's name from session state
+    client_name = st.session_state.client_name
+
     for challenge, challenge_value in key_challenges.items():
         if isinstance(challenge_value, dict):  # Check if the challenge is a nested dictionary
             with st.expander(challenge):
@@ -35,11 +40,13 @@ def radio_select(selected_solution, key_challenges, parent_list=""):
 
                     # Create a DataFrame with the most recent input
                     new_entry_df = pd.DataFrame({
+                        'Client'   : [client_name], 
                         'Solution': [selected_solution],
                         'Category': ['Key Challenges'],
                         'Sub-Category': [sub_category],
                         'Importance': [selected_option],
-                        'User Input': [user_input]
+                        'User Input': [user_input],
+                        'Date Loaded': [datetime.now().strftime('%Y-%m-%d %H:%M:%S')]
                     })
 
                     # Remove existing entries for the same Sub-Category
@@ -59,6 +66,8 @@ def radio_select(selected_solution, key_challenges, parent_list=""):
 
 # Function to iterate through the "Solutions Aspect" section of the proposal sections
 def text_input(selected_solution, solutions_aspect):
+    # Retrieve client's name from session state
+    client_name = st.session_state.client_name
     for category, sub_categories in solutions_aspect.items():
         user_input = st.session_state.selected_options.get(f"{category}_input", "")
 
@@ -76,11 +85,13 @@ def text_input(selected_solution, solutions_aspect):
             else:
                 # If no entry exists, create a new one
                 new_entry_df = pd.DataFrame({
-                    'Solution': selected_solution,
+                    'Client'  : [client_name],
+                    'Solution': [selected_solution],
                     'Category': ['Solutions Aspect'],
                     'Sub-Category': [category],
                     'Importance': [''],  # Adjust if necessary
-                    'User Input': [user_input]
+                    'User Input': [user_input],
+                    'Date Loaded': [datetime.now().strftime('%Y-%m-%d %H:%M:%S')]
                 })
                 # Concatenate the existing DataFrame with the new DataFrame
                 st.session_state.user_inputs = pd.concat([st.session_state.user_inputs, new_entry_df], ignore_index=True)
@@ -97,3 +108,70 @@ def text_input(selected_solution, solutions_aspect):
 def generate_csv(data):
     csv = data.to_csv(index=False)
     return csv.encode()
+
+# Function to establish connection to sql server
+#def connect_to_db():
+#    server = st.secrets["db_credentials"]["server"]
+#    database = st.secrets["db_credentials"]["database"]
+#    username = st.secrets["db_credentials"]["username"]
+#    password = st.secrets["db_credentials"]["password"]
+#    cnxn = pyodbc.connect(f'DRIVER={{ODBC Driver 17 for SQL Server}};SERVER={server};DATABASE={database};UID={username};PWD={password}')
+#    cursor = cnxn.cursor()
+#    return cursor
+
+def connect_to_db():
+
+    # Access secrets
+    username = st.secrets["snowflake"]["username"]
+    password = st.secrets["snowflake"]["password"]
+    account = st.secrets["snowflake"]["account"]
+    warehouse = st.secrets["snowflake"]["warehouse"]
+    database = st.secrets["snowflake"]["database"]
+    schema = st.secrets["snowflake"]["schema"]
+
+
+    # Connect to Snowflake
+    cnxn = snowflake.connector.connect(
+            user=username,
+            password=password,
+            account=account,
+            warehouse=warehouse,
+            database=database,
+            schema=schema)
+
+    return cnxn
+
+# Function to export DataFrame to sql
+#def export_to_sql(data, cursor):
+    #for index, row in data.iterrows():
+        #cursor.execute("INSERT INTO UserInputs (Solution, Category, SubCategory, Importance, UserInput) VALUES (?, ?, ?, ?, ?)", 
+                       #row['Solution'], row['Category'], row['Sub-Category'], row['Importance'], row['User Input'])
+    #cursor.commit()
+
+# Function to export DataFrame to snowflake
+def export_to_sql(data, cnxn):
+    cursor = cnxn.cursor()
+    try:
+        for index, row in data.iterrows():
+            query = """
+            INSERT INTO Captured_Data
+            (Client, Solution, Category, Sub_Category, Importance, User_Input, Date_Loaded)
+            VALUES (%(client)s, %(solution)s, %(category)s, %(sub_category)s, %(importance)s, %(user_input)s, %(date_loaded)s)
+            """
+            row_data = {
+                'client'  : row['Client'],
+                'solution': row['Solution'],
+                'category': row['Category'],
+                'sub_category': row['Sub-Category'],
+                'importance': row['Importance'],
+                'user_input': row['User Input'],
+                'date_loaded': row['Date Loaded']
+            }
+            cursor.execute(query, row_data)
+        cnxn.commit()  # Commit the transaction using the connection object
+    except Exception as e:
+        print(f"Error during database operation: {e}")
+        cnxn.rollback()  # Rollback in case of error
+    finally:
+        cursor.close()  # Ensure the cursor is closed after operation
+
