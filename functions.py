@@ -8,13 +8,38 @@ from datetime import datetime
 # Define radio options
 radio_options = ["None", "Low", "Moderate", "High"]
 
+# def generate_session_id():
+
+# Check if a session ID already exists
+    # if 'session_id' not in st.session_state:
+        # Generate a new UUID4 session ID
+        # st.session_state.session_id = str(uuid.uuid4())
+    # return st.session_state.session_id
+
+# Function to generate or retrieve session ID
+def get_session_id():
+    # Check if session ID already exists in st.session_state
+    if 'session_id' not in st.session_state:
+        # If not, generate a new UUID4 session ID
+        current_session_id = str(uuid.uuid4())
+        # Store the session ID in st.session_state for persistence across sessions
+        st.session_state.session_id = current_session_id
+    else:
+        # Retrieve the session ID from st.session_state
+        current_session_id = st.session_state.session_id
+    return current_session_id
 
 def generate_session_id():
-    # Generate a UUID4 session ID
-    session_id = str(uuid.uuid4())
+    # Check if session ID already exists in st.session_state
+    if 'session_id' not in st.session_state:
+        # If not, generate a new UUID4 session ID
+        session_id = str(uuid.uuid4())
+        # Store the session ID in st.session_state for persistence across sessions
+        st.session_state.session_id = session_id
+    else:
+        # Retrieve the session ID from st.session_state
+        session_id = st.session_state.session_id
     return session_id
-
-st.session_state.session_id = generate_session_id()
 
 # Function to iterate through the "Key Challenges" section of the proposal sections
 def radio_select(selected_solution, key_challenges, parent_list=""):
