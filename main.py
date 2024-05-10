@@ -19,6 +19,7 @@ with open("proposal_sections.json", "r") as json_file:
 #     return session_id
 
 session_id = generate_session_id() 
+
 # Define the main function to render different sections based on sidebar selection
 def main():
     st.sidebar.title("Client Details ")

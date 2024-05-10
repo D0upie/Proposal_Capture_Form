@@ -10,9 +10,11 @@ radio_options = ["None", "Low", "Moderate", "High"]
 
 
 def generate_session_id():
-    # Generate a UUID4 session ID
-    session_id = str(uuid.uuid4())
-    st.session_state.session_id =  session_id
+    # Check if a session ID already exists
+    if 'session_id' not in st.session_state:
+        # Generate a new UUID4 session ID
+        st.session_state.session_id = str(uuid.uuid4())
+    return st.session_state.session_id
 
 
 # Function to iterate through the "Key Challenges" section of the proposal sections
