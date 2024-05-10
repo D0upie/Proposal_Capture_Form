@@ -14,7 +14,7 @@ def generate_session_id():
     session_id = str(uuid.uuid4())
     return session_id
 
-#st.session_state.session_id = generate_session_id()
+st.session_state.session_id = generate_session_id()
 
 # Function to iterate through the "Key Challenges" section of the proposal sections
 def radio_select(selected_solution, key_challenges, parent_list=""):
