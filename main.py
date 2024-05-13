@@ -14,7 +14,9 @@ with open("proposal_sections.json", "r") as json_file:
     st.session_state.proposal_sections = json.load(json_file)
 
 session_id = generate_session_id() 
+
 current_session_id = get_session_id()
+
 
 # Define the main function to render different sections based on sidebar selection
 def main():

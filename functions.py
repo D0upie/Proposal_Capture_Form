@@ -30,6 +30,7 @@ def get_session_id():
     return current_session_id
 
 def generate_session_id():
+
     # Check if session ID already exists in st.session_state
     if 'session_id' not in st.session_state:
         # If not, generate a new UUID4 session ID
@@ -40,6 +41,7 @@ def generate_session_id():
         # Retrieve the session ID from st.session_state
         session_id = st.session_state.session_id
     return session_id
+
 
 # Function to iterate through the "Key Challenges" section of the proposal sections
 def radio_select(selected_solution, key_challenges, parent_list=""):
