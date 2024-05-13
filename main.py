@@ -2,8 +2,9 @@ import streamlit as st
 import pandas as pd
 import json, datetime
 import uuid
+import time
 # Import necessary functions or modules
-from functions import radio_select, text_input, generate_csv, connect_to_db, export_to_sql, generate_session_id
+from functions import radio_select, text_input, generate_csv, connect_to_db, export_to_sql, generate_session_id, get_session_id
 from datetime import datetime
 
 st.set_page_config(layout="wide")
@@ -12,20 +13,21 @@ st.set_page_config(layout="wide")
 with open("proposal_sections.json", "r") as json_file:
     st.session_state.proposal_sections = json.load(json_file)
 
-# def generate_session_id():
-#     # Generate a UUID4 session ID
-#     session_id = str(uuid.uuid4())
-#     st.session_state.session_id = session_id
-#     return session_id
-
 session_id = generate_session_id() 
+
+current_session_id = get_session_id()
+
 
 # Define the main function to render different sections based on sidebar selection
 def main():
+
+   
     st.sidebar.title("Client Details ")
     client_name = st.sidebar.text_input("Enter client name:", placeholder="Please enter client name here", value=st.session_state.get("client_name", ""))
     # Store client's name in session state
     st.session_state.client_name = client_name
+
+
 
     # Initiate solution option if not already set
     if 'selected_solution' not in st.session_state:
@@ -42,16 +44,26 @@ def main():
     page = st.sidebar.selectbox("Go to", ["Key Challenges", "Solutions Aspect", "Additional Info", "Summary"])
 
     if page == "Main Menu":
+        if 'session_id' not in st.session_state:
+            st.header("No session ID present")
         render_page_1()
     elif page == "Key Challenges":
+        if 'session_id' not in st.session_state:
+            st.header("No session ID present")
         render_page_2()
     elif page == "Solutions Aspect":
+        if 'session_id' not in st.session_state:
+            st.header("No session ID present")
         render_page_3()
     elif page == "Additional Info":
+        if 'session_id' not in st.session_state:
+            st.header("No session ID present")
         render_page_4()
     elif page == "Summary":
+        if 'session_id' not in st.session_state:
+            st.header("No session ID present")
         render_page_5()
-
+    
 # Define functions to render each page
 def render_page_1():
     st.title("Client Details:")
@@ -74,6 +86,7 @@ def render_page_1():
 
 
 def render_page_2():
+
     # Retrieve solution option from session state
     selected_solution = st.session_state.selected_solution
 
@@ -177,6 +190,10 @@ def render_page_4():
 def render_page_5():
     # Retrieve solution option from session state
     selected_solution = st.session_state.selected_solution
+
+    # Initialize DataFrame to store user inputs
+    if 'user_inputs' not in st.session_state:
+        st.session_state.user_inputs = pd.DataFrame(columns=['Session ID','Client', 'Solution','Category', 'Sub-Category', 'Importance', 'User Input', 'Date Loaded'])
 
     # Retrieve user inputs DataFrame from session state
     user_inputs = st.session_state.user_inputs[st.session_state.user_inputs['Solution'] == selected_solution]
