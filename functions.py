@@ -1,6 +1,6 @@
 import streamlit as st
 import pandas as pd
-import csv, pyodbc
+import csv  #, pyodbc
 import snowflake.connector
 import uuid
 from datetime import datetime
@@ -22,6 +22,7 @@ def radio_select(selected_solution, key_challenges, parent_list=""):
     # Retrieve client's name from session state
     client_name = st.session_state.client_name
     session_id = st.session_state.session_id
+    project_name = st.session_state.project_name
 
     for challenge, challenge_value in key_challenges.items():
         if isinstance(challenge_value, dict):  # Check if the challenge is a nested dictionary
@@ -53,6 +54,7 @@ def radio_select(selected_solution, key_challenges, parent_list=""):
                     new_entry_df = pd.DataFrame({
                         'Session ID': [session_id],
                         'Client'   : [client_name], 
+                        'Project name'  : [project_name],
                         'Solution': [selected_solution],
                         'Category': ['Key Challenges'],
                         'Sub-Category': [sub_category],
@@ -78,9 +80,11 @@ def radio_select(selected_solution, key_challenges, parent_list=""):
 
 # Function to iterate through the "Solutions Aspect" section of the proposal sections
 def text_input(selected_solution, solutions_aspect):
-    # Retrieve client's name from session state
+    # Retrieve client's details from session state
     client_name = st.session_state.client_name
     session_id = st.session_state.session_id
+    project_name = st.session_state.project_name
+
     for category, sub_categories in solutions_aspect.items():
         user_input = st.session_state.selected_options.get(f"{category}_input", "")
 
@@ -100,6 +104,7 @@ def text_input(selected_solution, solutions_aspect):
                 new_entry_df = pd.DataFrame({
                     'Session ID': [session_id],
                     'Client'  : [client_name],
+                    'Project name'  : [project_name],
                     'Solution': [selected_solution],
                     'Category': ['Solutions Aspect'],
                     'Sub-Category': [category],
@@ -152,12 +157,13 @@ def export_to_sql(data, cnxn):
         for index, row in data.iterrows():
             query = """
             INSERT INTO Captured_Data
-            (Session_id,Client, Solution, Category, Sub_Category, Importance, User_Input, Date_Loaded)
-            VALUES (%(session_id)s,%(client)s, %(solution)s, %(category)s, %(sub_category)s, %(importance)s, %(user_input)s, %(date_loaded)s)
+            (Session_id,Client,Project_name, Solution, Category, Sub_Category, Importance, User_Input, Date_Loaded)
+            VALUES (%(session_id)s,%(client)s,%(project_name)s, %(solution)s, %(category)s, %(sub_category)s, %(importance)s, %(user_input)s, %(date_loaded)s)
             """
             row_data = {
                 'session_id': row['Session ID'],
                 'client'  : row['Client'],
+                'project_name' : row['Project name'],
                 'solution': row['Solution'],
                 'category': row['Category'],
                 'sub_category': row['Sub-Category'],

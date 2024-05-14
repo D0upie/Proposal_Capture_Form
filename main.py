@@ -3,7 +3,7 @@ import pandas as pd
 import json, datetime
 import uuid
 # Import necessary functions or modules
-from functions import radio_select, text_input, generate_csv, connect_to_db, export_to_sql, generate_session_id
+from functions import radio_select, text_input, generate_csv, connect_to_db, export_to_sql, generate_session_id 
 from datetime import datetime
 
 st.set_page_config(layout="wide")
@@ -26,6 +26,11 @@ def main():
     client_name = st.sidebar.text_input("Enter client name:", placeholder="Please enter client name here", value=st.session_state.get("client_name", ""))
     # Store client's name in session state
     st.session_state.client_name = client_name
+
+    # st.sidebar.title("Project Name ")
+    project_name = st.sidebar.text_input("Enter project name:", placeholder="Please enter project name here", value=st.session_state.get("project_name", ""))
+    # Store client's name in session state
+    st.session_state.project_name = project_name
 
     # Initiate solution option if not already set
     if 'selected_solution' not in st.session_state:
@@ -59,6 +64,12 @@ def render_page_1():
     client_name = st.text_input("Enter client name:", placeholder="Please enter client name here", value=st.session_state.get("client_name", ""))
     # Store client's name in session state
     st.session_state.client_name = client_name
+
+    # st.sidebar.title("Project Name ")
+    project_name = st.sidebar.text_input("Enter project name:", placeholder="Please enter project name here", value=st.session_state.get("project_name", ""))
+    # Store client's name in session state
+    st.session_state.project_name = project_name
+
     
     # Initiate solution option if not already set
     if 'selected_solution' not in st.session_state:
@@ -83,12 +94,15 @@ def render_page_2():
     # Retrieve client's name from session state
     client_name = st.session_state.client_name
 
+     # Retrieve project's name from session state
+    project_name = st.session_state.project_name
+
     # Retrieve proposal_sections from session state
     proposal_sections = st.session_state.proposal_sections
 
     # Initialize DataFrame to store user inputs
     if 'user_inputs' not in st.session_state:
-        st.session_state.user_inputs = pd.DataFrame(columns=['Session ID','Client','Solution','Category', 'Sub-Category', 'Importance', 'User Input','Date Loaded'])
+        st.session_state.user_inputs = pd.DataFrame(columns=['Session ID','Client','Project name','Solution','Category', 'Sub-Category', 'Importance', 'User Input','Date Loaded'])
 
     st.title(f"Key Challenges - *{st.session_state.selected_solution}* for *{st.session_state.client_name}*")
     radio_select(selected_solution, proposal_sections[st.session_state.selected_solution]["Key Challenges"])
@@ -109,12 +123,15 @@ def render_page_3():
     # Retrieve client's name from session state
     client_name = st.session_state.client_name
 
+     # Retrieve project's name from session state
+    project_name = st.session_state.project_name
+
     # Retrieve proposal_sections from session state
     proposal_sections = st.session_state.proposal_sections
 
     # Initialize DataFrame to store user inputs
     if 'user_inputs' not in st.session_state:
-        st.session_state.user_inputs = pd.DataFrame(columns=['Session ID','Client', 'Solution','Category', 'Sub-Category', 'Importance', 'User Input', 'Date Loaded'])
+        st.session_state.user_inputs = pd.DataFrame(columns=['Session ID','Client','Project name', 'Solution','Category', 'Sub-Category', 'Importance', 'User Input', 'Date Loaded'])
 
     st.title(f"Solutions Aspect - *{st.session_state.selected_solution}* for *{st.session_state.client_name}*")
     text_input(selected_solution, proposal_sections[st.session_state.selected_solution]["Solution Aspect"])
@@ -135,13 +152,16 @@ def render_page_4():
     # Retrieve client's name from session state
     client_name = st.session_state.client_name
 
+    # Retrieve project's name from session state
+    project_name = st.session_state.project_name
+
     # Retrieve or generate session ID
     # session_id = generate_session_id()  # You need to define a function to generate session IDs
 
 
     # Initialize DataFrame to store user inputs
     if 'user_inputs' not in st.session_state:
-        st.session_state.user_inputs = pd.DataFrame(columns=['Session ID','Client', 'Solution','Category', 'Sub-Category', 'Importance', 'User Input', 'Date Loaded'])
+        st.session_state.user_inputs = pd.DataFrame(columns=['Session ID','Client','Project name', 'Solution','Category', 'Sub-Category', 'Importance', 'User Input', 'Date Loaded'])
 
     st.title(f"Additional Info for *{client_name}*")
     
@@ -160,6 +180,7 @@ def render_page_4():
         new_entry_df = pd.DataFrame({
             'Session ID': [st.session_state.session_id],
             'Client'  : [client_name],
+            'Project name'  : [project_name],
             'Solution': [selected_solution],
             'Category': ['Additional Info'],
             'Sub-Category': [''],  # Adjust if necessary
@@ -189,11 +210,12 @@ def render_page_5():
 
     # Define CSV file path
     client_name = st.session_state.client_name
+    project_name = st.session_state.project_name
     Year = datetime.now().strftime("%Y")
     Hour = datetime.now().strftime("%H")
     Minutes = datetime.now().strftime("%M")
     Seconds = datetime.now().strftime("%S")
-    file_name = (f"Proposal_Form_{client_name}_{Year}{Hour}{Minutes}{Seconds}.csv")
+    file_name = (f"Proposal_Form_{client_name}_{project_name}{Year}{Hour}{Minutes}{Seconds}.csv")
     csv_data = generate_csv(user_inputs)
 
 
